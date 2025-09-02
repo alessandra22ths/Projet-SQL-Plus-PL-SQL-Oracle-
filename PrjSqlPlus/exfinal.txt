@@ -1,0 +1,289 @@
+SQL> SET SERVEROUTPUT ON
+SQL> 
+SQL> CREATE OR REPLACE FUNCTION CONCHA_F_q2 (
+  2  	inv_id IN NUMBER,
+  3  	o_id IN NUMBER
+  4  ) RETURN NUMBER IS
+  5     v_soustotal NUMBER;
+  6  BEGIN
+  7  	SELECT i.price * o.Order_Quantity
+  8  	INTO v_soustotal
+  9  	FROM INVENTORY i
+ 10  	JOIN ORDER_LINE o ON i.InventoryID = o.InventoryID
+ 11  	WHERE i.InventoryID = inv_id AND o.OrderID = o.id;
+ 12  
+ 13  	RETURN v_soustotal;
+ 14  EXCEPTION
+ 15  	WHEN NO_DATA_FOUND THEN
+ 16  		RETURN NULL;
+ 17  END;
+ 18  /
+
+Advertencia: Función creada con errores de compilación.
+
+SQL> CREATE OR REPLACE PROCEDURE CONCHA_P_q2 (
+  2  	inv_id IN NUMBER,
+  3  	o_id IN NUMBER
+  4  ) IS
+  5  	v_soustotal NUMBER;
+  6  	v_count_inv NUMBER;
+  7  	v_count_ord NUMBER;
+  8   	v_combinaison NUMBER;
+  9  BEGIN
+ 10  	SELECT COUNT(*) INTO v_count_inv FROM INVENTORY WHERE InventoryID = inv_id;
+ 11  	IF v_count_inv = 0 THEN
+ 12  		DBMS_OUTPUT.PUT_LINE('Erreur: o_id n'existe pas);
+ 13  		RETURN;
+ 14  	END IF;
+ 15  
+ 16  	SELECT COUNT(*) INTO v_combinaison
+ 17  	FROM ORDER_LINE
+ 18  	WHERE InventoryID = inv_id AND OrderID = o_id;
+ 19  
+ 20  	IF v_combinaison = 0 THEN
+ 21  		DBMS_OUTPUT.PUT_LINE('Erreur: La combinaison de inv_id et o_id n'existe pas.');
+ 22  		RETURN;
+ 23  	END IF;
+ 24  
+ 25  	v_soustotal := CONCHA_F_q2(inv_id, o_id);
+ 26  
+ 27  	DBMS_OUTPUT.PUT_LINE('Le sous-total des combinaisons ' || inv_id || ' et ' || o_id || ' est ' || v_soustotal || ' dollars. ');
+ 28  END;
+ 29  /
+
+Advertencia: Procedimiento creado con errores de compilación.
+
+SQL> BEGIN
+  2  	DBMS_OUTPUT.PUT_LINE('---TEST FONCTION Q2 ---');
+  3  	DBMS_OUTPUT.PUT_LINE(CONCHA_F_q2(1, 1001));
+  4  	DBMS_OUTPUT.PUT_LINE(CONCHA_F_q1(2, 1002));
+  5  
+  6  	DBMS_OUTPUT.PUT_LINE('---TEST PROCEDURE Q2 ---');
+  7  	CONCHA_P_q2(1, 1001);
+  8  	CONCHA_P_q2(99, 9999);
+  9  END;
+ 10  /
+	DBMS_OUTPUT.PUT_LINE(CONCHA_F_q2(1, 1001));
+	                     *
+ERROR en línea 3:
+ORA-06550: línea 3, columna 23: 
+PLS-00905: el objeto C##ALESSA.CONCHA_F_Q2 no es válido 
+ORA-06550: línea 3, columna 2: 
+PL/SQL: Statement ignored 
+ORA-06550: línea 4, columna 23: 
+PLS-00201: el identificador 'CONCHA_F_Q1' se debe declarar 
+ORA-06550: línea 4, columna 2: 
+PL/SQL: Statement ignored 
+ORA-06550: línea 7, columna 2: 
+PLS-00905: el objeto C##ALESSA.CONCHA_P_Q2 no es válido 
+ORA-06550: línea 7, columna 2: 
+PL/SQL: Statement ignored 
+ORA-06550: línea 8, columna 2: 
+PLS-00905: el objeto C##ALESSA.CONCHA_P_Q2 no es válido 
+ORA-06550: línea 8, columna 2: 
+PL/SQL: Statement ignored 
+
+
+SQL> BEGIN
+  2  	DBMS_OUTPUT.PUT_LINE('---TEST FONCTION Q2---');
+  3  	DBMS_OUTPUT.PUT_LINE('Sous-total: ' || TO_CHAR(CONCHA_F_q2(1, 1001)));
+  4  	DBMS_OUTPUT.PUT_LINE('Sous-total: ' || TO_CHAR(CONCHA_F_q2(2, 1002)));
+  5  
+  6  	DBMS_OUTPUT.PUT_LINE('---Test Procedure Q2---');
+  7  	CONCHA_P_q2(1, 1001);
+  8  	CONCHA_P_q2(99, 9999);
+  9  END;
+ 10  /
+	DBMS_OUTPUT.PUT_LINE('Sous-total: ' || TO_CHAR(CONCHA_F_q2(1, 1001)));
+	                                               *
+ERROR en línea 3:
+ORA-06550: línea 3, columna 49: 
+PLS-00905: el objeto C##ALESSA.CONCHA_F_Q2 no es válido 
+ORA-06550: línea 3, columna 2: 
+PL/SQL: Statement ignored 
+ORA-06550: línea 4, columna 49: 
+PLS-00905: el objeto C##ALESSA.CONCHA_F_Q2 no es válido 
+ORA-06550: línea 4, columna 2: 
+PL/SQL: Statement ignored 
+ORA-06550: línea 7, columna 2: 
+PLS-00905: el objeto C##ALESSA.CONCHA_P_Q2 no es válido 
+ORA-06550: línea 7, columna 2: 
+PL/SQL: Statement ignored 
+ORA-06550: línea 8, columna 2: 
+PLS-00905: el objeto C##ALESSA.CONCHA_P_Q2 no es válido 
+ORA-06550: línea 8, columna 2: 
+PL/SQL: Statement ignored 
+
+
+SQL> CREATE OR REPLACE PROCEDURE CONCHA_P_q3 (
+  2  	p_status IN VARCHAR2
+  3  ) IS
+  4  BEGIN
+  5  	FOR rec_term IN (
+  6  		SELECT * FROM term WHERE term_status = p_status
+  7  	) LOOP
+  8  		DBMS_OUTPUT.PUT_LINE('Term: ' || rec_term.term_id || ' - ' || rec_term.term_status);
+  9  
+ 10  		FOR rec_course IN (
+ 11  			SELECT * FROM course_section WHERE term_id = rec_term.term_id AND ROWNUM <= 5
+ 12  	) LOOP
+ 13  		DBMS_OUTPUT.PUT_LINE('Course: ' || rec_course.course_id || ', Section: ' || rec_course.section_id || ',Room: '|| rec_course.room_id || ',Schedule:'|| rec_course.schedule_id || ',Instructor: ' || rec_course.instructor_id);
+ 14  	END LOOP;
+ 15  
+ 16  	DBMS_OUTPUT.PUT_LINE('-----------------------------');
+ 17  	END LOOP;
+ 18  END;
+ 19  /
+
+Advertencia: Procedimiento creado con errores de compilación.
+
+SQL> BEGIN
+  2  	DBMS_OUTPUT.PUT_LINE('---TEST Q3 AVEC OPEN---');
+  3  	CONCHA_P_q3('OPEN');
+  4  	DBMS_OUTPUT.PUT_LINE('---TEST Q3 AVEC CLOSED---');
+  5  	CONCHA_P_q3('CLOSED');
+  6  END;
+  7  /
+	CONCHA_P_q3('OPEN');
+	*
+ERROR en línea 3:
+ORA-06550: línea 3, columna 2: 
+PLS-00905: el objeto C##ALESSA.CONCHA_P_Q3 no es válido 
+ORA-06550: línea 3, columna 2: 
+PL/SQL: Statement ignored 
+ORA-06550: línea 5, columna 2: 
+PLS-00905: el objeto C##ALESSA.CONCHA_P_Q3 no es válido 
+ORA-06550: línea 5, columna 2: 
+PL/SQL: Statement ignored 
+
+
+SQL> CREATE TABLE audit_customer (
+  2  	audit_id NUMBER,
+  3  	old_c_id NUMBER,
+  4  	old_c_last VARCHAR2(30),
+  5  	old_c_first VARCHAR2(30),
+  6  	old_c_birthdate DATE,
+  7  	updating_user VARCHAR2(30),
+  8  	date_updated DATE
+  9  );
+
+Tabla creada.
+
+SQL> CREATE OR REPLACE TRIGGER trg_audit_customer
+  2  BEFORE UPDATE ON customer
+  3  FOR EACH ROW
+  4  BEGIN
+  5  	INSERT INTO audit_customer (
+  6  		audit_id, old_c_id, old_c_last, old_c_first, old_c_birthdate, updating_user, date_updated
+  7  	)
+  8  	VALUES (
+  9  	audit_customer_seq.NEXTVAL,
+ 10  	:OLD.customer_id,
+ 11  	:OLD.customer_last,
+ 12  	:OLD.customer_first,
+ 13  	:OLD.customer_birthdate,
+ 14  	USER,
+ 15  	SYSDATE
+ 16  );
+ 17  END;
+ 18  /
+BEFORE UPDATE ON customer
+                 *
+ERROR en línea 2:
+ORA-00942: la tabla o vista no existe 
+
+
+SQL> CREATE OR REPLACE PACKAGE concha_final AS
+  2  	FUNCTION CONCHA_F_q2(inv_id IN NUMBER, o_id IN NUMBER) RETURN NUMBER;
+  3  	PROCEDURE CONCHA_P_q2(inv_id IN NUMBER, o_id IN NUMBER);
+  4  	PROCEDURE CONCHA_P_q3(p_status IN VARCHAR2);
+  5  END concha_final;
+  6  /
+
+Paquete creado.
+
+SQL> CREATE OR REPLACE PACKAGE BODY concha_final AS
+  2  	FUNCTION CONCHA_F_q2 (
+  3  	 inv_id IN NUMBER,
+  4  	 o_id IN NUMBER
+  5  	) RETURN NUMBER IS
+  6  	  v_soustotal NUMBER;
+  7  	BEGIN
+  8  	  SELECT i.price * o.Order_Quantity
+  9  	  INTO v_soustotal
+ 10  	  FROM INVENTORY i
+ 11  	  JOIN ORDER_LINE o ON i.InventoryID = o.InventoryID
+ 12  	  WHERE i.InventoryID = inv_id AND o.OrderID = o_id;
+ 13  	  RETURN v_soustotal;
+ 14  	EXCEPTION
+ 15  	  WHEN NO_DATA_FOUND THEN
+ 16  		RETURN NULL;
+ 17  END;
+ 18  
+ 19  	PROCEDURE CONCHA_P_q2 (
+ 20  	  inv_id IN NUMBER,
+ 21  	  o_id IN NUMBER
+ 22  	) IS
+ 23  	  v_soustotal NUMBER;
+ 24  	  v_count_inv NUMBER;
+ 25  	  v_count_ord NUMBER;
+ 26  	  v_combinaison NUMBER;
+ 27  	BEGIN
+ 28  	  SELECT COUNT(*) INTO v_count_inv FROM INVENTORY WHERE InventoryID = inv_id;
+ 29  	  IF v_count_inv = 0 THEN
+ 30  		DBMS_OUTPUT.PUT_LINE('Erreur: inv_id n'existe pas.');
+ 31  		RETURN;
+ 32  	  END IF;
+ 33  
+ 34  	  SELECT COUNT(*) INTO v_combinaison
+ 35  	  FROM ORDER_LINE
+ 36  	  WHERE InventoryID = inv_id AND OrderID = o_id;
+ 37  
+ 38  	IF v_combinaison = 0 THEN
+ 39  		DBMS_OUTPUT.PUT_LINE('Erreur: La combinaison de inv_id et o_id n'existe pas.');
+ 40  		RETURN;
+ 41  	END IF;
+ 42  
+ 43  	v_soustotal := CONCHA_F_q2(inv_id, o_id);
+ 44  	DBMS_OUTPUT.PUT_LINE('Le sous-total des combinaisons' || inv_id || ' et ' || o_id || ' est ' || v_soustotal || 'dollars.');
+ 45  END;
+ 46  
+ 47  PROCEDURE CONCHA_P_q3 (
+ 48  	p_status IN VARCHAR2
+ 49  ) IS
+ 50  BEGIN
+ 51  	FOR rec_term IN (
+ 52  		SELECT * FROM term WHERE term_status = p_status
+ 53  	) LOOP
+ 54  		DBMS_OUTPUT.PUT_LINE('Term:
+ 55  ' || rec_term.term_id || ' - ' || rec_term.term_status);
+ 56  
+ 57  	FOR rec_course IN (
+ 58  		SELECT * FROM course_section WHERE term_id = rec_term.term_id AND ROWNUM <= 5
+ 59  	) LOOP
+ 60  		DBMS_OUTPUT.PUT_LINE('Course: ' || rec_course.course_id|| ', Section: ' || rec_course.section_id || 'Room: ' || rec_course.room_id || ',Schedule:' || rec_course.schedule_id || ',Instructor: ' || rec_course.instructor_id);
+ 61  END LOOP;
+ 62  	DBMS_OUTPUT.PUT_LINE('---------------');
+ 63  END LOOP;
+ 64  END;
+ 65  
+ 66  END concha_final;
+ 67  /
+
+Advertencia: Cuerpo del paquete creado con errores de compilación.
+
+SQL> BEGIN
+  2  	concha_final.CONCHA_P_q2(1, 1001);
+  3  	concha_final.CONCHA_P_q3('OPEN');
+  4  END;
+  5  /
+BEGIN
+*
+ERROR en línea 1:
+ORA-04063: package body "C##ALESSA.CONCHA_FINAL" tiene errores 
+ORA-06508: PL/SQL: no se ha encontrado la unidad de programa llamada : 
+"C##ALESSA.CONCHA_FINAL" 
+ORA-06512: en línea 2 
+
+
+SQL> SPOOL OFF
