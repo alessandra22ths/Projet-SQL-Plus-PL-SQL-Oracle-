@@ -1,0 +1,2 @@
+# Projet-SQL-Plus-PL-SQL-Oracle-
+C’est un projet réalisé en PL/SQL avec SQL*Plus dans le cadre d’un exercice final. J’y ai développé différentes fonctions et procédures pour manipuler les données d’un inventaire et des commandes (INVENTORY, ORDER_LINE), puis les ai regroupées dans un package. 
